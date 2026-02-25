@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-gray-50 text-gray-900;
+  -webkit-tap-highlight-color: transparent;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+.btn-primary {
+  @apply bg-fire-500 hover:bg-fire-600 active:bg-fire-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200;
+}
+
+.btn-secondary {
+  @apply bg-gray-200 hover:bg-gray-300 active:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors duration-200;
+}
+
+.card {
+  @apply bg-white rounded-xl shadow-md overflow-hidden;
+}
+
+/* iOS touch optimization */
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
