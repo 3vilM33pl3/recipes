@@ -126,4 +126,4 @@ The repository includes a `Dockerfile` that builds the frontend, installs the ba
 
 ## License
 
-No license file is currently included in this repository.
+This project is licensed under the MIT License. See `LICENSE`.
