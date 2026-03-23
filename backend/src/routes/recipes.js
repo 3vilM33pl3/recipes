@@ -4,9 +4,8 @@ import { unlink } from 'fs/promises';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import sharp from 'sharp';
-import { nanoid } from 'nanoid';
 import { upload } from '../middleware/upload.js';
-import { createRecipe, getRecipes, getRecipeBySlug, deleteRecipe } from '../db/database.js';
+import { createRecipe, getRecipes, getRecipeBySlug, deleteRecipe, updateRecipe } from '../db/database.js';
 import { extractRecipe, extractRecipeFromText } from '../services/vision.js';
 import { extractTextFromWord, isWordDocument } from '../services/document.js';
 import { generateQRCode } from '../services/qrGenerator.js';
@@ -19,6 +18,25 @@ const execAsync = promisify(exec);
 async function convertHeicToJpeg(inputPath, outputPath) {
   await execAsync(`heif-convert -q 90 "${inputPath}" "${outputPath}"`);
   return outputPath;
+}
+
+function normalizeText(value, { fallback = null } = {}) {
+  if (typeof value !== 'string') {
+    return fallback;
+  }
+
+  const normalized = value.trim();
+  return normalized === '' ? fallback : normalized;
+}
+
+function normalizeList(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map(item => (typeof item === 'string' ? item.trim() : ''))
+    .filter(Boolean);
 }
 
 const router = Router();
@@ -148,6 +166,35 @@ router.get('/:slug', async (req, res) => {
   } catch (error) {
     console.error('Get error:', error);
     res.status(500).json({ success: false, error: 'Failed to get recipe' });
+  }
+});
+
+// PUT /api/recipes/:slug - Update a recipe
+router.put('/:slug', async (req, res) => {
+  try {
+    const existingRecipe = await getRecipeBySlug(req.params.slug);
+    if (!existingRecipe) {
+      return res.status(404).json({ success: false, error: 'Recipe not found' });
+    }
+
+    const recipe = {
+      title: normalizeText(req.body.title, { fallback: 'Untitled Recipe' }),
+      description: normalizeText(req.body.description),
+      servings: normalizeText(req.body.servings),
+      prepTime: normalizeText(req.body.prepTime),
+      cookTime: normalizeText(req.body.cookTime),
+      difficulty: normalizeText(req.body.difficulty),
+      ingredients: normalizeList(req.body.ingredients),
+      instructions: normalizeList(req.body.instructions),
+      nutrition: normalizeText(req.body.nutrition),
+      notes: normalizeText(req.body.notes),
+    };
+
+    const updatedRecipe = await updateRecipe(req.params.slug, recipe);
+    res.json({ success: true, recipe: updatedRecipe });
+  } catch (error) {
+    console.error('Update error:', error);
+    res.status(500).json({ success: false, error: 'Failed to update recipe' });
   }
 });
 

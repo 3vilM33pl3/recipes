@@ -28,6 +28,11 @@ export async function getRecipe(slug) {
   return response.data;
 }
 
+export async function updateRecipe(slug, recipe) {
+  const response = await api.put(`/recipes/${slug}`, recipe);
+  return response.data;
+}
+
 export async function deleteRecipe(slug) {
   const response = await api.delete(`/recipes/${slug}`);
   return response.data;

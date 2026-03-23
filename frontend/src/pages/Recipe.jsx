@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import RecipeView from '../components/RecipeView';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { getRecipe, deleteRecipe } from '../api/recipes';
+import { getRecipe, updateRecipe, deleteRecipe } from '../api/recipes';
 
 function Recipe() {
   const { slug } = useParams();
@@ -10,6 +10,8 @@ function Recipe() {
   const [recipe, setRecipe] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [saveError, setSaveError] = useState(null);
+  const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
@@ -21,6 +23,7 @@ function Recipe() {
       const data = await getRecipe(slug);
       if (data.success && data.recipe) {
         setRecipe(data.recipe);
+        setSaveError(null);
       } else {
         setError('Recipe not found');
       }
@@ -29,6 +32,28 @@ function Recipe() {
       setError('Failed to load recipe');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSave = async (updates) => {
+    setSaving(true);
+    setSaveError(null);
+
+    try {
+      const result = await updateRecipe(slug, updates);
+      if (result.success && result.recipe) {
+        setRecipe(result.recipe);
+        return true;
+      }
+
+      setSaveError('Failed to save recipe');
+      return false;
+    } catch (err) {
+      console.error('Failed to save recipe:', err);
+      setSaveError(err.response?.data?.error || 'Failed to save recipe');
+      return false;
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -101,7 +126,14 @@ function Recipe() {
 
       {/* Main content */}
       <main className="max-w-4xl mx-auto px-4 py-8">
-        {recipe && <RecipeView recipe={recipe} />}
+        {recipe && (
+          <RecipeView
+            recipe={recipe}
+            onSave={handleSave}
+            isSaving={saving}
+            saveError={saveError}
+          />
+        )}
 
         {/* Actions */}
         <div className="mt-6 flex flex-wrap gap-3 justify-center">

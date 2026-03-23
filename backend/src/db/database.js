@@ -62,6 +62,42 @@ export async function updateRecipeQr(id, qrCodeImage) {
   return result;
 }
 
+export async function updateRecipe(slug, recipe) {
+  const db = await getDb();
+  const result = await db.query(
+    `UPDATE recipes
+     SET title = $1,
+         description = $2,
+         servings = $3,
+         prep_time = $4,
+         cook_time = $5,
+         difficulty = $6,
+         ingredients = $7,
+         instructions = $8,
+         nutrition = $9,
+         notes = $10,
+         updated_at = CURRENT_TIMESTAMP
+     WHERE slug = $11
+     RETURNING *`,
+    [
+      recipe.title,
+      recipe.description,
+      recipe.servings,
+      recipe.prepTime,
+      recipe.cookTime,
+      recipe.difficulty,
+      JSON.stringify(recipe.ingredients || []),
+      JSON.stringify(recipe.instructions || []),
+      recipe.nutrition,
+      recipe.notes,
+      slug,
+    ]
+  );
+
+  if (result.rows.length === 0) return null;
+  return mapRowToRecipe(result.rows[0]);
+}
+
 export async function getRecipeBySlug(slug) {
   const db = await getDb();
   const result = await db.query('SELECT * FROM recipes WHERE slug = $1', [slug]);
